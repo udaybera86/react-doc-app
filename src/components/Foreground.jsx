@@ -9,7 +9,7 @@ function Foreground() {
     const data = [
         {
             desc: "Detail your project's objectives, timeline, and deliverables for success.",
-            fileSize: "1.2mb",
+            // fileSize: "1.2mb",
             close: false,
             tag: {
                 isOpen: true,
@@ -47,7 +47,8 @@ function Foreground() {
             tag: {
                 isOpen: false,
                 tagTitle: "Download Now",
-                tagColor: "green"
+                tagColor: "green",
+                fileName: "paper_2.jpg"
             }
         },
         {

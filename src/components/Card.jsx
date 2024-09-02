@@ -15,8 +15,12 @@ function Card({data, reference}) {
 
     useEffect(() => {
         async function fetchFileSize() {
-            const size = await getFileSize(`assets/files/${data.tag.fileName}`);
-            setFileSize(size);
+            try {
+                const size = await getFileSize(`assets/files/${data.tag.fileName}`);
+                setFileSize(size);
+            } catch (error) {
+                console.error('Error fetching file size:', error);
+            }
         }
         fetchFileSize();
     }, [data.tag.fileName, getFileSize]);
