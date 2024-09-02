@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FaRegFileCode } from "react-icons/fa";
 import { LuDownload } from "react-icons/lu";
 import { IoClose } from "react-icons/io5";
@@ -7,19 +7,19 @@ import { motion } from "framer-motion";
 function Card({data, reference}) {
     const [fileSize, setFileSize] = useState('');
 
+    const getFileSize = useCallback(async (url) => {
+        const response = await fetch(url, { method: 'HEAD' });
+        const contentLength = response.headers.get('Content-Length');
+        return formatBytes(contentLength);
+    }, []);
+
     useEffect(() => {
         async function fetchFileSize() {
             const size = await getFileSize(`assets/files/${data.tag.fileName}`);
             setFileSize(size);
         }
         fetchFileSize();
-    }, [data.tag.fileName]);
-
-    async function getFileSize(url) {
-        const response = await fetch(url, { method: 'HEAD' });
-        const contentLength = response.headers.get('Content-Length');
-        return formatBytes(contentLength);
-    }
+    }, [data.tag.fileName, getFileSize]);
 
     function formatBytes(bytes, decimals = 2) {
         if (bytes === 0) return '0 Bytes';
