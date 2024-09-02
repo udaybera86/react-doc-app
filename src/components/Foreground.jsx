@@ -9,7 +9,7 @@ function Foreground() {
     const data = [
         {
             desc: "Detail your project's objectives, timeline, and deliverables for success.",
-            fileSize: "0.7mb",
+            fileSize: "1.2mb",
             close: false,
             tag: {
                 isOpen: true,
