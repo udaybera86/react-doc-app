@@ -9,7 +9,6 @@ function Foreground() {
     const data = [
         {
             desc: "Detail your project's objectives, timeline, and deliverables for success.",
-            // fileSize: "1.2mb",
             close: false,
             tag: {
                 isOpen: true,
@@ -20,7 +19,6 @@ function Foreground() {
         },
         {
             desc: "Document key discussions, decisions made, and follow-up actions required.",
-            fileSize: "0.9mb",
             close: false,
             tag: {
                 isOpen: true,
@@ -31,7 +29,6 @@ function Foreground() {
         },
         {
             desc: "Organize tasks efficiently to prioritize and track completion effectively.",
-            fileSize: "1.3mb",
             close: false,
             tag: {
                 isOpen: true,
@@ -42,7 +39,6 @@ function Foreground() {
         },
         {
             desc: "Summarize critical insights, methodologies, and data from your research.",
-            fileSize: "0.4mb",
             close: true,
             tag: {
                 isOpen: false,
@@ -53,7 +49,6 @@ function Foreground() {
         },
         {
             desc: "Outline financial plans, expenses, and projections for better management.",
-            fileSize: "0.6mb",
             close: false,
             tag: {
                 isOpen: true,
