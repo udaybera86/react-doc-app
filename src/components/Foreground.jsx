@@ -26,7 +26,7 @@ function Foreground() {
                 isOpen: true,
                 tagTitle: "Download Now",
                 tagColor: "blue",
-                fileName: "30-days-of-react-ebook.pdf"
+                fileName: "30-days-of-react-ebook-doc.pdf"
             }
         },
         {
