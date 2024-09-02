@@ -12,7 +12,7 @@ function Card({data, reference}) {
             const response = await fetch(url, { method: 'HEAD' });
             const contentLength = response.headers.get('Content-Length');
             if (contentLength) {
-                return formatBytes(parseInt(contentLength, 10)); // Ensure the content length is correctly parsed as an integer
+                return formatBytes(parseInt(contentLength, 10));
             } else {
                 throw new Error('Content-Length header is missing');
             }
