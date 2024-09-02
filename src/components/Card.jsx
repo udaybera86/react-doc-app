@@ -8,9 +8,18 @@ function Card({data, reference}) {
     const [fileSize, setFileSize] = useState('');
 
     const getFileSize = useCallback(async (url) => {
-        const response = await fetch(url, { method: 'HEAD' });
-        const contentLength = response.headers.get('Content-Length');
-        return formatBytes(contentLength);
+        try {
+            const response = await fetch(url, { method: 'HEAD' });
+            const contentLength = response.headers.get('Content-Length');
+            if (contentLength) {
+                return formatBytes(parseInt(contentLength, 10)); // Ensure the content length is correctly parsed as an integer
+            } else {
+                throw new Error('Content-Length header is missing');
+            }
+        } catch (error) {
+            console.error('Error fetching file size:', error);
+            return 'Unknown size';
+        }
     }, []);
 
     useEffect(() => {
