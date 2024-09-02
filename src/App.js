@@ -1,25 +1,18 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react'
+import Background from './components/Background'
+import Foreground from './components/Foreground'
+import Notice from './components/Notice'
+import Copyright from './components/Copyright'
 
-function App() {
+const App = () => {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className='relative w-full h-screen bg-zinc-800'>
+      <Notice />
+      <Background />
+      <Foreground />
+      <Copyright />
     </div>
-  );
+  )
 }
 
-export default App;
+export default App
