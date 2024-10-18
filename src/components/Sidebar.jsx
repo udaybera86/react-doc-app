@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './account-authentication/login';
 import Register from './account-authentication/register';
-import Dashboard from './account-authentication/Dashboard';
 import { IoClose } from "react-icons/io5";
 
 function Sidebar({ isOpen, onClose, user }) {
