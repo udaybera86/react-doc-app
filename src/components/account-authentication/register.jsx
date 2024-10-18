@@ -30,7 +30,7 @@ function Register({ toggleForm, onSuccessfulSignup }) {
             createdAt: new Date().toISOString()
           });
 
-          toast.success("Account registration successful. Login to view our exciting features.", {
+          toast.success("Thank you for registering. Your account has been created successfully.", {
             position: "top-center",
             autoClose: 3000,
           });
