@@ -51,15 +51,12 @@ function Card({data, reference}) {
                 <div className='flex items-center justify-between px-8 py-3 mb-2'>
                     <h3 className='text-xs'>{fileSize}</h3>
                     <span className='w-8 h-8 bg-zinc-800 rounded-full flex items-center justify-center cursor-pointer'>
-                        {data.close ? <IoClose color='#F5F5F5'/> : <LuDownload color='#F5F5F5'/>}
+                        <LuDownload color='#F5F5F5'/>
                     </span>
                 </div>
-                {data.tag.isOpen && (
-                    <a href={`assets/files/${data.tag.fileName}`} download={`${data.tag.fileName}`} className={`tag flex items-center justify-center ${data.tag.tagColor === "blue" ? "bg-blue-600" : "bg-green-600"} py-4 cursor-pointer`}>
-                    <h3 className='text-sm'>{data.tag.tagTitle}</h3>
-                    </a>
-                )}
-                
+                <a href={`assets/files/${data.tag.fileName}`} download={`${data.tag.fileName}`} className={`tag flex items-center justify-center ${data.tag.tagColor === "blue" ? "bg-blue-600" : "bg-green-600"} py-4 cursor-pointer`}>
+                 <h3 className='text-sm'>{data.tag.tagTitle}</h3>
+                </a>
             </div>
         </motion.div>
     )
