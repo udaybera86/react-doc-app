@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './account-authentication/login';
 import Register from './account-authentication/register';
+import Dashboard from './account-authentication/Dashboard';
 import { IoClose } from "react-icons/io5";
 
 function Sidebar({ isOpen, onClose, user }) {
@@ -25,7 +26,7 @@ function Sidebar({ isOpen, onClose, user }) {
           user ? <Navigate to="/dashboard" replace /> : 
             (showLogin ? <Login toggleForm={toggleForm} /> : <Register toggleForm={toggleForm} onSuccessfulSignup={handleSuccessfulSignup} />)
         } />
-        <Route path="/dashboard" element={user ? <p className="text-white text-lg">Test</p> : <Navigate to="/" replace />} />
+        <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/" replace />} />
       </Routes>
     </div>
   );
