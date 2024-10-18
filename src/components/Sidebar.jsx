@@ -26,7 +26,7 @@ function Sidebar({ isOpen, onClose, user }) {
           user ? <Navigate to="/dashboard" replace /> : 
             (showLogin ? <Login toggleForm={toggleForm} /> : <Register toggleForm={toggleForm} onSuccessfulSignup={handleSuccessfulSignup} />)
         } />
-        <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/" replace />} />
+        <Route path="/dashboard" element={user ? <p className="text-white text-lg">Test</p> : <Navigate to="/" replace />} />
       </Routes>
     </div>
   );
