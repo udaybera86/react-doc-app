@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FaRegFileCode } from "react-icons/fa";
 import { LuDownload } from "react-icons/lu";
-import { IoClose } from "react-icons/io5";
 import { motion } from "framer-motion";
 
 function Card({data, reference}) {
