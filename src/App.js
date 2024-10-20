@@ -30,7 +30,7 @@ const App = () => {
         <Notice />
         <Background />
         <div className="flex relative z-[3]">
-          <div className={`${sidebarOpen ? 'w-3/4' : 'w-full'}`}>
+          <div className={`${sidebarOpen ? 'lg:w-3/4 md:w-1/2 w-full' : 'w-full'}`}>
             <Foreground toggleSidebar={toggleSidebar} />
           </div>
           <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} user={user} />

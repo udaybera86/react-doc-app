@@ -17,7 +17,7 @@ function Sidebar({ isOpen, onClose, user }) {
   };
 
   return (
-    <div className={`sidebar fixed z-[3] top-0 right-0 overflow-y-auto w-1/4 h-full bg-[#18181B] rounded-tl-[30px] rounded-bl-[30px] border-l-[7px] border-[#C6C1C142] p-[34px] pt-[86px] transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+    <div className={`sidebar fixed z-[3] top-0 right-0 overflow-y-auto lg:w-1/4 md:w-1/2 w-full h-full bg-[#18181B] rounded-tl-[30px] rounded-bl-[30px] border-l-[7px] border-[#C6C1C142] p-[34px] pt-[86px] transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
       <button onClick={onClose} className="fixed top-5 right-5 text-white">
         <IoClose size={24} color="white" />
       </button>
