@@ -4,6 +4,7 @@ import { TbDotsVertical } from "react-icons/tb";
 import { signOut } from "firebase/auth";
 import { auth } from "./firebase";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 function Dashboard() {
   const [fileName, setFileName] = useState("");
