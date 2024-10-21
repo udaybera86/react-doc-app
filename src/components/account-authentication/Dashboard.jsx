@@ -79,7 +79,7 @@ function Dashboard() {
               <textarea
                 id="short-description"
                 rows="2"
-                maxlength="80"
+                maxLength="80"
                 className="w-full bg-[#27272A] p-2 text-[12px] leading-5 text-white border-b-2 border-[#16A34A] placeholder:text-white focus-visible:outline-none"
                 placeholder="Write a brief summary to highlight main purpose or content of the document (max 80 characters)"
               />
