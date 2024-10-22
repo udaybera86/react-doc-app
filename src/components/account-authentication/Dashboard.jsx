@@ -1,30 +1,147 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FiUpload, FiPlus } from "react-icons/fi";
 import { TbDotsVertical } from "react-icons/tb";
 import { signOut } from "firebase/auth";
-import { auth } from "./firebase";
+import { auth, db } from "./firebase";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import MenuItem from "@mui/material/MenuItem/MenuItem";
+import Menu from "@mui/material/Menu/Menu";
+import { MdEditDocument, MdOutlineDeleteSweep } from "react-icons/md";
+import {
+  collection,
+  getDocs,
+  setDoc,
+  doc,
+  deleteDoc as firestoreDeleteDoc,
+} from "firebase/firestore";
 
 function Dashboard() {
-  const [fileName, setFileName] = useState("");
-  const [bgColor, setBgColor] = useState("#16A34A");
-  const [txtColor, setTxtColor] = useState("#FFFFFF");
   const navigate = useNavigate();
+  const [popoverAnchorEl, setPopoverAnchorEl] = useState(null);
+  const [selectedDocId, setSelectedDocId] = useState(null);
+  const isPopoverOpen = Boolean(popoverAnchorEl);
+  const popoverId = isPopoverOpen ? "simple-popover" : undefined;
+  const [docs, setDocs] = useState([]);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [editingTitleId, setEditingTitleId] = useState(null);
 
-  const [docs, setDocs] = useState([
-    {
-      id: 1,
-      name: "React Doc App 1"
-    },
-    // {
-    //   id: 2,
-    //   name: "React Doc App 2"
-    // },
-  ]);
+  // Load user's docs on mount
+  useEffect(() => {
+    loadUserDocs();
+  }, []);
+
+  // Handle beforeunload event for page refresh
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue =
+          "You have unsaved changes. Are you sure you want to leave?";
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.onbeforeunload = handleBeforeUnload;
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.onbeforeunload = null;
+    };
+  }, [hasUnsavedChanges]);
+
+  const loadUserDocs = async () => {
+    try {
+      const userId = auth.currentUser.uid;
+      const userDocsRef = collection(db, `users/${userId}/docs`);
+      const querySnapshot = await getDocs(userDocsRef);
+
+      const loadedDocs = [];
+      querySnapshot.forEach((doc) => {
+        loadedDocs.push({ id: doc.id, ...doc.data() });
+      });
+
+      setDocs(
+        loadedDocs.length > 0
+          ? loadedDocs
+          : [
+              {
+                id: 1,
+                name: "React Doc App 1",
+                isOpen: true,
+                description: "",
+                fileName: "",
+                buttonName: "Download Now",
+                bgColor: "#16A34A",
+                txtColor: "#FFFFFF",
+              },
+            ]
+      );
+      setHasUnsavedChanges(false);
+    } catch (error) {
+      toast.error("Error loading documents", {
+        position: "bottom-center",
+      });
+    }
+  };
+
+  const updateDocs = (newDocs) => {
+    setDocs(newDocs);
+    setHasUnsavedChanges(true);
+  };
+
+  const deleteDoc = async (docId) => {
+    try {
+      const userId = auth.currentUser.uid;
+      // Delete from Firestore
+      await firestoreDeleteDoc(doc(db, `users/${userId}/docs/${docId}`));
+      // Update local state
+      updateDocs(docs.filter((doc) => doc.id !== docId));
+      handlePopoverClose();
+      toast.success("Document deleted successfully!", {
+        position: "top-center",
+      });
+    } catch (error) {
+      toast.error("Error deleting document", {
+        position: "bottom-center",
+      });
+    }
+  };
+
+  const saveAllDocs = async () => {
+    try {
+      const userId = auth.currentUser.uid;
+      const batch = [];
+
+      for (const document of docs) {
+        const docRef = doc(db, `users/${userId}/docs/${document.id}`);
+        batch.push(setDoc(docRef, document));
+      }
+
+      await Promise.all(batch);
+      setHasUnsavedChanges(false);
+
+      toast.success("All changes saved successfully!", {
+        position: "top-center",
+      });
+    } catch (error) {
+      toast.error("Error saving documents", {
+        position: "bottom-center",
+      });
+    }
+  };
 
   const handleLogout = async () => {
     try {
+      if (hasUnsavedChanges) {
+        const confirmLeave = window.confirm(
+          "You have unsaved changes. Would you like to save before leaving? Press OK to save."
+        );
+        if (confirmLeave) {
+          await saveAllDocs();
+        }
+      }
       await signOut(auth);
       navigate("/");
     } catch (error) {
@@ -36,24 +153,86 @@ function Dashboard() {
 
   const addNewDoc = () => {
     const newDoc = {
-      id: docs.length + 1,
-      name: `React Doc App ${docs.length + 1}`
+      id: String(Date.now()),
+      name: `React Doc App ${docs.length + 1}`,
+      isOpen: false,
+      description: "",
+      fileName: "",
+      buttonName: "Download Now",
+      bgColor: "#16A34A",
+      txtColor: "#FFFFFF",
     };
-    setDocs([...docs, newDoc]);
+    updateDocs([...docs, newDoc]);
   };
 
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    setFileName(file ? file.name : "");
+  const handleEdit = (docId) => {
+    updateDocs(
+      docs.map((doc) => ({
+        ...doc,
+        isOpen: doc.id === docId,
+      }))
+    );
   };
 
-  const handleColorChange = (e) => {
-    const { name, value } = e.target;
-    if (name === "bgColor") {
-      setBgColor(value);
-    } else if (name === "txtColor") {
-      setTxtColor(value);
+  const handleTitleEdit = (docId) => {
+    setEditingTitleId(docId);
+  };
+
+  const handleTitleChange = (docId, newTitle) => {
+    updateDocs(
+      docs.map((doc) => (doc.id === docId ? { ...doc, name: newTitle } : doc))
+    );
+  };
+
+  const handleTitleKeyDown = (e, docId) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      setEditingTitleId(null);
     }
+  };
+
+  const handleTitleBlur = () => {
+    setEditingTitleId(null);
+  };
+
+  const handleFileChange = (docId, event) => {
+    const file = event.target.files[0];
+    updateDocs(
+      docs.map((doc) =>
+        doc.id === docId ? { ...doc, fileName: file ? file.name : "" } : doc
+      )
+    );
+  };
+
+  const handleColorChange = (docId, e) => {
+    const { name, value } = e.target;
+    updateDocs(
+      docs.map((doc) =>
+        doc.id === docId
+          ? {
+              ...doc,
+              [name === "bgColor" ? "bgColor" : "txtColor"]: value,
+            }
+          : doc
+      )
+    );
+  };
+
+  const handleInputChange = (docId, field, value) => {
+    updateDocs(
+      docs.map((doc) => (doc.id === docId ? { ...doc, [field]: value } : doc))
+    );
+  };
+
+  const handlePopoverButtonClick = (event, docId) => {
+    event.stopPropagation();
+    setSelectedDocId(docId);
+    setPopoverAnchorEl(event.currentTarget);
+  };
+
+  const handlePopoverClose = (event) => {
+    if (event) event.stopPropagation();
+    setPopoverAnchorEl(null);
   };
 
   return (
@@ -62,86 +241,196 @@ function Dashboard() {
       <div className="h-[58vh] pr-2 overflow-y-auto">
         {docs.map((doc) => (
           <div key={doc.id} className="mb-6">
-            <div className="flex justify-between items-center mb-3 bg-[#16A34A] py-4 px-3">
-              <h2 className="text-base leading-tight font-semibold">
-                {doc.name}
-              </h2>
-              <button className="text-gray-400">
+            <div
+              className="flex justify-between items-center mb-3 bg-[#16A34A] py-4 px-3 cursor-pointer"
+              onClick={() => handleEdit(doc.id)}
+            >
+              {editingTitleId === doc.id ? (
+                <input
+                  type="text"
+                  value={doc.name}
+                  onChange={(e) => handleTitleChange(doc.id, e.target.value)}
+                  onKeyDown={(e) => handleTitleKeyDown(e, doc.id)}
+                  onBlur={handleTitleBlur}
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-base leading-tight font-semibold bg-transparent border-none focus:outline-none text-white"
+                  autoFocus
+                />
+              ) : (
+                <h2
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleTitleEdit(doc.id);
+                  }}
+                  className="text-base leading-tight font-semibold cursor-text"
+                >
+                  {doc.name}
+                </h2>
+              )}
+              <button
+                aria-describedby={popoverId}
+                onClick={(e) => handlePopoverButtonClick(e, doc.id)}
+                className="text-gray-400"
+              >
                 <TbDotsVertical size={18} color="white" />
               </button>
             </div>
-            <div className="mb-3">
-              <label
-                htmlFor="short-description"
-                className="w-fit block mb-2 text-sm"
-              >
-                Short Description*
-              </label>
-              <textarea
-                id="short-description"
-                rows="2"
-                maxLength="80"
-                className="w-full bg-[#27272A] p-2 text-[12px] leading-5 text-white border-b-2 border-[#16A34A] placeholder:text-white focus-visible:outline-none"
-                placeholder="Write a brief summary to highlight main purpose or content of the document (max 80 characters)"
-              />
-            </div>
-            <div className="relative w-fit mb-4">
-              <label htmlFor="file-input" className="block mb-2 text-sm">
-                Upload Doc*
-              </label>
-              <input
-                type="file"
-                onChange={handleFileChange}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                id="file-input"
-                required
-              />
-              <div className="flex items-center">
-                <label
-                  htmlFor="file-input"
-                  className="flex items-center px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors cursor-pointer"
-                >
-                  <FiUpload className="mr-2" size={20} />
-                  <span className="font-semibold">Upload</span>
-                </label>
-                {fileName && (
-                  <span className="ml-2 text-white font-normal text-sm leading-4">
-                    {fileName}
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="mb-4">
-              <label className="w-fit block mb-2 text-sm">Buttons Names*</label>
-              <input
-                type="text"
-                className="w-full mb-4 pt-4 pb-3 px-3 border-b-2 border-[#16A34A] text-white text-sm leading-none bg-[#27272A] placeholder:text-white focus-visible:outline-none"
-                defaultValue="Download Now"
-              />
-              <div className="w-full">
-                <div className="flex items-center mb-4 space-x-3">
-                  <div className="w-10 h-10 rounded-full overflow-hidden border border-[#fff]" style={{ backgroundColor: bgColor }}>
-                    <input type="color" name="bgColor" onChange={handleColorChange} value={bgColor} className="w-full h-full cursor-pointer opacity-0" />
-                  </div>
-                  <p className="m-0">
-                    <span className="block text-sm text-white mb-1">Button Background Color</span>
-                    <span className="color-code block text-xs text-white">{bgColor}</span>
-                  </p>
+
+            {doc.isOpen && (
+              <div>
+                <div className="mb-3">
+                  <label className="w-fit block mb-2 text-sm">
+                    Short Description*
+                  </label>
+                  <textarea
+                    rows="2"
+                    maxLength="80"
+                    value={doc.description}
+                    onChange={(e) =>
+                      handleInputChange(doc.id, "description", e.target.value)
+                    }
+                    className="w-full bg-[#27272A] p-2 text-[12px] leading-5 text-white border-b-2 border-[#16A34A] placeholder:text-white focus-visible:outline-none"
+                    placeholder="Write a brief summary to highlight main purpose or content of the document (max 80 characters)"
+                  />
                 </div>
-                <div className="flex items-center mb-4 space-x-3">
-                  <div className="w-10 h-10 rounded-full overflow-hidden border border-[#fff]" style={{ backgroundColor: txtColor }}>
-                    <input type="color" name="txtColor" onChange={handleColorChange} value={txtColor} className="w-full h-full cursor-pointer opacity-0" />
+
+                <div className="relative w-fit mb-4">
+                  <label className="block mb-2 text-sm">Upload Doc*</label>
+                  <input
+                    type="file"
+                    onChange={(e) => handleFileChange(doc.id, e)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    required
+                  />
+                  <div className="flex items-center">
+                    <label className="flex items-center px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors cursor-pointer">
+                      <FiUpload className="mr-2" size={20} />
+                      <span className="font-semibold">Upload</span>
+                    </label>
+                    {doc.fileName && (
+                      <span className="ml-2 text-white font-normal text-sm leading-4">
+                        {doc.fileName}
+                      </span>
+                    )}
                   </div>
-                  <p className="m-0">
-                    <span className="block text-sm text-white mb-1">Button Text Color</span>
-                    <span className="color-code block text-xs text-white">{txtColor}</span>
-                  </p>
+                </div>
+
+                <div className="mb-4">
+                  <label className="w-fit block mb-2 text-sm">
+                    Button Name*
+                  </label>
+                  <input
+                    type="text"
+                    value={doc.buttonName}
+                    onChange={(e) =>
+                      handleInputChange(doc.id, "buttonName", e.target.value)
+                    }
+                    className="w-full mb-4 pt-4 pb-3 px-3 border-b-2 border-[#16A34A] text-white text-sm leading-none bg-[#27272A] placeholder:text-white focus-visible:outline-none"
+                  />
+                  <div className="w-full">
+                    <div className="flex items-center mb-4 space-x-3">
+                      <div
+                        className="w-10 h-10 rounded-full overflow-hidden border border-[#fff]"
+                        style={{ backgroundColor: doc.bgColor }}
+                      >
+                        <input
+                          type="color"
+                          name="bgColor"
+                          value={doc.bgColor}
+                          onChange={(e) => handleColorChange(doc.id, e)}
+                          className="w-full h-full cursor-pointer opacity-0"
+                        />
+                      </div>
+                      <p className="m-0">
+                        <span className="block text-sm text-white mb-1">
+                          Button Background Color
+                        </span>
+                        <span className="color-code block text-xs text-white">
+                          {doc.bgColor}
+                        </span>
+                      </p>
+                    </div>
+                    <div className="flex items-center mb-4 space-x-3">
+                      <div
+                        className="w-10 h-10 rounded-full overflow-hidden border border-[#fff]"
+                        style={{ backgroundColor: doc.txtColor }}
+                      >
+                        <input
+                          type="color"
+                          name="txtColor"
+                          value={doc.txtColor}
+                          onChange={(e) => handleColorChange(doc.id, e)}
+                          className="w-full h-full cursor-pointer opacity-0"
+                        />
+                      </div>
+                      <p className="m-0">
+                        <span className="block text-sm text-white mb-1">
+                          Button Text Color
+                        </span>
+                        <span className="color-code block text-xs text-white">
+                          {doc.txtColor}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         ))}
       </div>
+
+      <Menu
+        id={popoverId}
+        open={isPopoverOpen}
+        anchorEl={popoverAnchorEl}
+        onClose={handlePopoverClose}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "right",
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "right",
+        }}
+        disableAutoFocus
+        disableAutoFocusItem
+        MenuListProps={{
+          sx: {
+            backgroundColor: "#18181B",
+            "& .MuiMenuItem-root": {
+              backgroundColor: "inherit",
+              color: "#fff",
+              fontFamily: "inherit",
+              "&:hover": {
+                backgroundColor: "inherit",
+              },
+            },
+          },
+        }}
+      >
+        <MenuItem
+          onClick={() => {
+            handleEdit(selectedDocId);
+            handlePopoverClose();
+          }}
+          className="flex items-center gap-2"
+        >
+          <MdEditDocument size={20} />
+          Edit
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            deleteDoc(selectedDocId);
+            handlePopoverClose();
+          }}
+          className="flex items-center gap-2"
+        >
+          <MdOutlineDeleteSweep size={20} />
+          Delete
+        </MenuItem>
+      </Menu>
+
       <div className="fixed bottom-0 left-0 w-full bg-[#18181B] px-[34px] pb-[34px]">
         <button
           onClick={addNewDoc}
@@ -149,11 +438,17 @@ function Dashboard() {
         >
           <FiPlus size={18} className="mr-2" /> ADD NEW DOC
         </button>
-        <button className="w-full bg-[#16A34A] text-white p-3 mt-6">
+        <button
+          className="w-full bg-[#16A34A] text-white p-3 mt-6"
+          onClick={saveAllDocs}
+        >
           Save
         </button>
         <div className="w-full flex justify-center">
-          <button onClick={handleLogout} className="text-white underline text-center mt-4">
+          <button
+            onClick={handleLogout}
+            className="text-white underline text-center mt-4"
+          >
             Log out
           </button>
         </div>
