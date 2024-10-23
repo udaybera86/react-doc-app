@@ -122,3 +122,5 @@ export function useDocs() {
   }
   return context;
 }
+
+export default DocsContext;
