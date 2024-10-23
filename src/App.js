@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { DocsProvider } from "./components/Context/DocsContext";
 import { BrowserRouter as Router } from "react-router-dom";
 import Background from "./components/Background";
 import Foreground from "./components/Foreground";
@@ -29,12 +30,22 @@ const App = () => {
       <div className="relative w-full h-screen bg-zinc-800">
         <Notice />
         <Background />
-        <div className="flex relative z-[3]">
-          <div className={`${sidebarOpen ? 'lg:w-3/4 md:w-1/2 w-full' : 'w-full'}`}>
-            <Foreground toggleSidebar={toggleSidebar} />
+        <DocsProvider>
+          <div className="flex relative z-[3]">
+            <div
+              className={`${
+                sidebarOpen ? "lg:w-3/4 md:w-1/2 w-full" : "w-full"
+              }`}
+            >
+              <Foreground toggleSidebar={toggleSidebar} />
+            </div>
+            <Sidebar
+              isOpen={sidebarOpen}
+              onClose={() => setSidebarOpen(false)}
+              user={user}
+            />
           </div>
-          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} user={user} />
-        </div>
+        </DocsProvider>
         <Copyright />
         <ToastContainer />
       </div>

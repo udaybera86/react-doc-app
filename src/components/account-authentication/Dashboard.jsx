@@ -5,31 +5,33 @@ import { signOut } from "firebase/auth";
 import { auth, db } from "./firebase";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import MenuItem from "@mui/material/MenuItem/MenuItem";
-import Menu from "@mui/material/Menu/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Menu from "@mui/material/Menu";
 import { MdEditDocument, MdOutlineDeleteSweep } from "react-icons/md";
 import {
-  collection,
-  getDocs,
-  setDoc,
   doc,
+  setDoc,
   deleteDoc as firestoreDeleteDoc,
 } from "firebase/firestore";
+import { useDocs } from "../Context/DocsContext";
 
 function Dashboard() {
   const navigate = useNavigate();
   const [popoverAnchorEl, setPopoverAnchorEl] = useState(null);
   const [selectedDocId, setSelectedDocId] = useState(null);
-  const isPopoverOpen = Boolean(popoverAnchorEl);
-  const popoverId = isPopoverOpen ? "simple-popover" : undefined;
-  const [docs, setDocs] = useState([]);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [editingTitleId, setEditingTitleId] = useState(null);
 
-  // Load user's docs on mount
-  useEffect(() => {
-    loadUserDocs();
-  }, []);
+  // Use the context instead of local state
+  const {
+    docs,
+    updateDocs,
+    hasUnsavedChanges,
+    setHasUnsavedChanges,
+    loadUserDocs,
+  } = useDocs();
+
+  const isPopoverOpen = Boolean(popoverAnchorEl);
+  const popoverId = isPopoverOpen ? "simple-popover" : undefined;
 
   // Handle beforeunload event for page refresh
   useEffect(() => {
@@ -43,60 +45,17 @@ function Dashboard() {
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
-    window.onbeforeunload = handleBeforeUnload;
-
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      window.onbeforeunload = null;
     };
   }, [hasUnsavedChanges]);
-
-  const loadUserDocs = async () => {
-    try {
-      const userId = auth.currentUser.uid;
-      const userDocsRef = collection(db, `users/${userId}/docs`);
-      const querySnapshot = await getDocs(userDocsRef);
-
-      const loadedDocs = [];
-      querySnapshot.forEach((doc) => {
-        loadedDocs.push({ id: doc.id, ...doc.data() });
-      });
-
-      setDocs(
-        loadedDocs.length > 0
-          ? loadedDocs
-          : [
-              {
-                id: 1,
-                name: "React Doc App 1",
-                isOpen: true,
-                description: "",
-                fileName: "",
-                buttonName: "Download Now",
-                bgColor: "#16A34A",
-                txtColor: "#FFFFFF",
-              },
-            ]
-      );
-      setHasUnsavedChanges(false);
-    } catch (error) {
-      toast.error("Error loading documents", {
-        position: "bottom-center",
-      });
-    }
-  };
-
-  const updateDocs = (newDocs) => {
-    setDocs(newDocs);
-    setHasUnsavedChanges(true);
-  };
 
   const deleteDoc = async (docId) => {
     try {
       const userId = auth.currentUser.uid;
       // Delete from Firestore
       await firestoreDeleteDoc(doc(db, `users/${userId}/docs/${docId}`));
-      // Update local state
+      // Update context state
       updateDocs(docs.filter((doc) => doc.id !== docId));
       handlePopoverClose();
       toast.success("Document deleted successfully!", {
@@ -156,7 +115,7 @@ function Dashboard() {
       id: String(Date.now()),
       name: `React Doc App ${docs.length + 1}`,
       isOpen: false,
-      description: "",
+      description: "New document description",
       fileName: "",
       buttonName: "Download Now",
       bgColor: "#16A34A",
@@ -242,7 +201,8 @@ function Dashboard() {
         {docs.map((doc) => (
           <div key={doc.id} className="mb-6">
             <div
-              className="flex justify-between items-center mb-3 bg-[#16A34A] py-4 px-3 cursor-pointer"
+              className="flex justify-between items-center mb-3 py-4 px-3 cursor-pointer"
+              style={{ backgroundColor: doc.bgColor }}
               onClick={() => handleEdit(doc.id)}
             >
               {editingTitleId === doc.id ? (
@@ -290,7 +250,7 @@ function Dashboard() {
                       handleInputChange(doc.id, "description", e.target.value)
                     }
                     className="w-full bg-[#27272A] p-2 text-[12px] leading-5 text-white border-b-2 border-[#16A34A] placeholder:text-white focus-visible:outline-none"
-                    placeholder="Write a brief summary to highlight main purpose or content of the document (max 80 characters)"
+                    placeholder="Write a brief summary (max 80 characters)"
                   />
                 </div>
 
