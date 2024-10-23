@@ -27,7 +27,6 @@ function Dashboard() {
     updateDocs,
     hasUnsavedChanges,
     setHasUnsavedChanges,
-    loadUserDocs,
   } = useDocs();
 
   const isPopoverOpen = Boolean(popoverAnchorEl);

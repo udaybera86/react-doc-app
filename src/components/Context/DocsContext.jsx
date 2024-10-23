@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { auth, db } from "../account-authentication/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { toast } from "react-toastify";
@@ -9,7 +9,6 @@ export function DocsProvider({ children }) {
   const [docs, setDocs] = useState([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Default dummy docs for new users
   const defaultDocs = [
     {
       id: "1",
@@ -68,11 +67,8 @@ export function DocsProvider({ children }) {
     },
   ];
 
-  useEffect(() => {
-    loadUserDocs();
-  }, []);
-
-  const loadUserDocs = async () => {
+  // Memoizing loadUserDocs to prevent unnecessary re-renders
+  const loadUserDocs = useCallback(async () => {
     try {
       const userId = auth.currentUser?.uid;
       if (!userId) return setDocs(defaultDocs);
@@ -92,7 +88,11 @@ export function DocsProvider({ children }) {
         position: "bottom-center",
       });
     }
-  };
+  }, [defaultDocs]);
+
+  useEffect(() => {
+    loadUserDocs();
+  }, [loadUserDocs]);
 
   const updateDocs = (newDocs) => {
     setDocs(newDocs);
