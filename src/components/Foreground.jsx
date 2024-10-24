@@ -1,53 +1,22 @@
-import React from "react";
+import React, { useRef } from "react";
 import Card from "./Card";
-import { useRef } from "react";
 import { RiMenu3Line } from "react-icons/ri";
+import { useDocs } from "./Context/DocsContext";
 
 function Foreground({ toggleSidebar }) {
   const ref = useRef(null);
+  const { docs, isLoading } = useDocs();
 
-  const data = [
-    {
-      desc: "Detail your project's objectives, timeline, and deliverables for success.",
-      tag: {
-        tagTitle: "Download Now",
-        tagColor: "green",
-        fileName: "paper_2.jpg",
-      },
-    },
-    {
-      desc: "Document key discussions, decisions made, and follow-up actions required.",
-      tag: {
-        tagTitle: "Download Now",
-        tagColor: "blue",
-        fileName: "30-days-of-react-ebook-doc.pdf",
-      },
-    },
-    {
-      desc: "Organize tasks efficiently to prioritize and track completion effectively.",
-      tag: {
-        tagTitle: "Download Now",
-        tagColor: "green",
-        fileName: "ReactJSNotesForProfessionals.pdf",
-      },
-    },
-    {
-      desc: "Summarize critical insights, methodologies, and data from your research.",
-      tag: {
-        tagTitle: "Download Now",
-        tagColor: "green",
-        fileName: "paper_2.jpg",
-      },
-    },
-    {
-      desc: "Outline financial plans, expenses, and projections for better management.",
-      tag: {
-        tagTitle: "Download Now",
-        tagColor: "blue",
-        fileName: "docs-app-ss.png",
-      },
-    },
-  ];
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#18181B] text-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p>Loading documents...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div ref={ref} className="foreground relative z-[3] top-0 left-0 w-full h-screen p-5">
@@ -58,8 +27,23 @@ function Foreground({ toggleSidebar }) {
         <RiMenu3Line size={24} color="white" />
       </button>
       <div className="flex items-start flex-wrap gap-[20px]">
-        {data.map((item, index) => (
-          <Card key={index} reference={ref} data={item} />
+        {docs.map((doc, index) => (
+          <Card
+            key={doc.id}
+            reference={ref}
+            data={{
+              desc: doc.description,
+              tag: {
+                tagTitle: doc.buttonName,
+                tagColor: doc.bgColor === '#2563EB' ? 'blue' : 'green',
+                fileName: doc.fileName,
+              },
+              style: {
+                backgroundColor: doc.bgColor,
+                color: doc.txtColor,
+              },
+            }}
+          />
         ))}
       </div>
     </div>

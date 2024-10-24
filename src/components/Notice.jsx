@@ -19,7 +19,7 @@ function Notice() {
   }, []);
 
   return (
-    <div className="notice-wrapper absolute bottom-[10%] left-0 z-[3] w-full flex justify-center">
+    <div className="notice-wrapper absolute bottom-[10%] left-1/2 -translate-x-1/2 z-[4] w-fit flex justify-center">
       {showNotice && (
         <div
           style={noticeStyle}

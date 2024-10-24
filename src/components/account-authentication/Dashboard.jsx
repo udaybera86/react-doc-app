@@ -3,7 +3,6 @@ import { FiUpload, FiPlus } from "react-icons/fi";
 import { TbDotsVertical } from "react-icons/tb";
 import { signOut } from "firebase/auth";
 import { auth, db } from "./firebase";
-import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import MenuItem from "@mui/material/MenuItem";
 import Menu from "@mui/material/Menu";
@@ -14,9 +13,9 @@ import {
   deleteDoc as firestoreDeleteDoc,
 } from "firebase/firestore";
 import { useDocs } from "../Context/DocsContext";
+import { useLoading } from '../Context/LoadingContext';
 
 function Dashboard() {
-  const navigate = useNavigate();
   const [popoverAnchorEl, setPopoverAnchorEl] = useState(null);
   const [selectedDocId, setSelectedDocId] = useState(null);
   const [editingTitleId, setEditingTitleId] = useState(null);
@@ -27,7 +26,10 @@ function Dashboard() {
     updateDocs,
     hasUnsavedChanges,
     setHasUnsavedChanges,
+    loadUserDocs,
   } = useDocs();
+
+  const { setIsLoading } = useLoading();
 
   const isPopoverOpen = Boolean(popoverAnchorEl);
   const popoverId = isPopoverOpen ? "simple-popover" : undefined;
@@ -51,11 +53,21 @@ function Dashboard() {
 
   const deleteDoc = async (docId) => {
     try {
-      const userId = auth.currentUser.uid;
+      setIsLoading(true);
+      const userId = auth.currentUser?.uid;
+      if (!userId) {
+        toast.error("You must be logged in to delete documents", {
+          position: "bottom-center",
+        });
+        return;
+      }
+
       // Delete from Firestore
       await firestoreDeleteDoc(doc(db, `users/${userId}/docs/${docId}`));
-      // Update context state
-      updateDocs(docs.filter((doc) => doc.id !== docId));
+
+      // Reload docs from server to ensure sync
+      await loadUserDocs();
+
       handlePopoverClose();
       toast.success("Document deleted successfully!", {
         position: "top-center",
@@ -64,11 +76,14 @@ function Dashboard() {
       toast.error("Error deleting document", {
         position: "bottom-center",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const saveAllDocs = async () => {
     try {
+      setIsLoading(true);
       const userId = auth.currentUser.uid;
       const batch = [];
 
@@ -87,6 +102,8 @@ function Dashboard() {
       toast.error("Error saving documents", {
         position: "bottom-center",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -101,7 +118,6 @@ function Dashboard() {
         }
       }
       await signOut(auth);
-      navigate("/");
     } catch (error) {
       toast.error(error.message, {
         position: "bottom-center",
@@ -192,6 +208,17 @@ function Dashboard() {
     if (event) event.stopPropagation();
     setPopoverAnchorEl(null);
   };
+
+  // if (isLoading) {
+  //   return (
+  //     <div className="flex items-center justify-center h-screen bg-[#18181B] text-white">
+  //       <div className="text-center">
+  //         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+  //         <p>Loading documents...</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="bg-[#18181B] text-white">
