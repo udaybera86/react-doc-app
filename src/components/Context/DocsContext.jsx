@@ -64,31 +64,11 @@ const DEFAULT_DOCS = [
 export function DocsProvider({ children }) {
   const [docs, setDocs] = useState(DEFAULT_DOCS);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  // const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(null);
   const { setIsLoading } = useLoading();
 
-  // Handle auth state changes
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      if (!currentUser) {
-        setDocs(DEFAULT_DOCS);
-        setIsLoading(false);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
   // Load user docs when auth state changes
-  useEffect(() => {
-    if (user) {
-      loadUserDocs();
-    }
-  }, [user]);
-
-  const loadUserDocs = async () => {
+  const loadUserDocs = React.useCallback(async () => {
     setIsLoading(true);
     try {
       if (!user) {
@@ -116,12 +96,32 @@ export function DocsProvider({ children }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, setIsLoading]);
 
-  const updateDocs = (newDocs) => {
+  // Handle auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (!currentUser) {
+        setDocs(DEFAULT_DOCS);
+        setIsLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [setIsLoading]);
+
+  // Load user docs when auth state changes
+  useEffect(() => {
+    if (user) {
+      loadUserDocs();
+    }
+  }, [user, loadUserDocs]);
+
+  const updateDocs = React.useCallback((newDocs) => {
     setDocs(newDocs);
     setHasUnsavedChanges(true);
-  };
+  }, []);
 
   const contextValue = React.useMemo(() => ({
     docs,
@@ -130,7 +130,7 @@ export function DocsProvider({ children }) {
     hasUnsavedChanges,
     setHasUnsavedChanges,
     loadUserDocs
-  }), [docs, hasUnsavedChanges]);
+  }), [docs, hasUnsavedChanges, updateDocs, loadUserDocs]);
 
   return (
     <DocsContext.Provider value={contextValue}>
